@@ -1,0 +1,275 @@
+<div id="wheelBox" class="fn-area">
+    <div class="ultimate-wheel-wrapper">
+        
+        <!-- ចំណងជើង -->
+        <div class="wheel-main-header">
+            <h1 class="main-title">កង់បង្វិលផ្សងសំណាង</h1>
+        </div>
+
+        <!-- ប៊ូតុងបញ្ជា -->
+        <div class="wheel-header-dual">
+            <button class="header-btn btn-winners-xl" onclick="showHistoryPanel()">
+                🏆 អ្នកឈ្នះ (<span id="winnerCount">0</span>)
+            </button>
+            <button class="header-btn btn-add-xl" onclick="showNamePanel()">
+                <i class="fas fa-plus-circle"></i> បញ្ចូលឈ្មោះ
+            </button>
+        </div>
+
+        <hr class="full-divider">
+
+        <!-- កង់បង្វិល -->
+        <div class="wheel-main-content">
+            <div class="wheel-container">
+                <div class="pointer-fixed"></div>
+                <canvas id="wheelCanvas" width="800" height="800"></canvas>
+                <div class="spin-btn-fixed" onclick="spinWheel()">SPIN</div>
+            </div>
+        </div>
+
+        <!-- ផ្ទាំងបញ្ចូលឈ្មោះ -->
+        <div id="namePanel" class="modal-full">
+            <div class="modal-box-full">
+                <div class="modal-header-big">
+                    <h2 style="margin:0; font-size: 32px; color: #ff1493; font-weight: 900;">បញ្ជីឈ្មោះ</h2>
+                    <button onclick="askConfirm('names')" class="btn-clear-xl">លុបទាំងអស់</button>
+                </div>
+                <div class="input-area-multi">
+                    <textarea id="multiNames" placeholder="សរសេរឈ្មោះ ១ ក្នុងមួយបន្ទាត់..." spellcheck="false"></textarea>
+                    <button onclick="processMultiNames()" class="btn-action-xl green">បញ្ចូលឈ្មោះទាំងអស់</button>
+                </div>
+                <div class="list-container-big">
+                    <ul id="nameList"></ul>
+                </div>
+                <div class="modal-footer-big">
+                    <button class="btn-action-xl pink" onclick="hideNamePanel()">រួចរាល់</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ផ្ទាំងបញ្ជីអ្នកឈ្នះ -->
+        <div id="historyPanel" class="modal-full" style="background: #f0f2f5;">
+            <div class="modal-box-full">
+                <div class="modal-header-big">
+                    <h2 style="margin:0; font-size: 32px; color: #ffc107; font-weight: 900;">🏆 បញ្ជីអ្នកឈ្នះ</h2>
+                    <button onclick="askConfirm('history')" class="btn-clear-xl" style="background:#666;">លុបប្រវត្តិ</button>
+                </div>
+                <div class="list-container-big">
+                    <div id="winnersLog"></div>
+                </div>
+                <div class="modal-footer-big">
+                    <button class="btn-action-xl black" onclick="hideHistoryPanel()">បិទត្រឡប់ទៅវិញ</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 👑 ផ្ទាំងសួរបញ្ជាក់ការលុប (Custom Confirm Modal) -->
+        <div id="confirmModal" class="modal-full-winner" style="display: none; background: rgba(0,0,0,0.85);">
+            <div class="winner-box-big" style="border: 6px solid #ff4444; padding: 40px 20px;">
+                <div style="font-size: 60px; margin-bottom: 20px;">⚠️</div>
+                <h2 style="font-size: 30px; color: #333; margin-bottom: 30px;">តើអ្នកពិតជាចង់លុប<br>ទិន្នន័យទាំងអស់មែនទេ?</h2>
+                <div style="display: flex; gap: 15px;">
+                    <button class="btn-action-xl black" style="flex: 1; padding: 20px; font-size: 22px;" onclick="closeConfirm()">ទេ</button>
+                    <button id="confirmYesBtn" class="btn-action-xl" style="flex: 1; padding: 20px; font-size: 22px; background: #ff4444;" onclick="">បាទ! លុបចោល</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Popup អបអរសាទរ -->
+        <div id="winnerPanel" class="modal-full-winner" style="display: none;">
+            <div class="winner-box-big">
+                <h1 style="color:#333; margin:0; font-size: 45px;">🎊 អបអរសាទរ! 🎊</h1>
+                <div id="winnerNameDisplay" class="winner-name-text-big">---</div>
+                <button class="btn-action-xl pink" onclick="closeWinner()">បិទ</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .ultimate-wheel-wrapper {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #ff1493; display: flex; flex-direction: column;
+            font-family: 'Battambang', Arial; overflow: hidden;
+        }
+        .wheel-main-header { padding: 10px; text-align: center; }
+        .main-title { color: yellow; font-size: 34px; font-weight: 900; margin: 0; text-shadow: 3px 3px 6px rgba(0,0,0,0.4); }
+
+        .wheel-header-dual { display: flex; gap: 12px; padding: 15px; }
+        .header-btn { flex: 1; padding: 22px 10px; border-radius: 18px; border: none; font-size: 24px; font-weight: 900; box-shadow: 0 6px 12px rgba(0,0,0,0.3); cursor: pointer; }
+        .btn-winners-xl { background: #ffc107; color: #333; }
+        .btn-add-xl { background: white; color: #ff1493; }
+
+        .full-divider { width: 100%; border: 0; height: 2px; background: rgba(255,255,255,0.3); margin: 2px 0; }
+
+        .input-area-multi { padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .input-area-multi textarea { 
+            width: 100%; height: 160px; padding: 20px; 
+            border: 4px solid #ff1493; border-radius: 20px; 
+            font-size: 24px; font-family: 'Battambang'; 
+            box-sizing: border-box; resize: none;
+        }
+        .btn-action-xl { width: 100%; padding: 25px; border-radius: 20px; border: none; font-size: 28px; font-weight: 900; color: white; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .btn-action-xl.green { background: #28a745; }
+        .btn-action-xl.pink { background: #ff1493; }
+        .btn-action-xl.black { background: #333; }
+        .btn-clear-xl { background: #ff4444; color: white; border: none; padding: 15px 20px; border-radius: 15px; font-size: 20px; font-weight: 900; }
+
+        .wheel-main-content { flex: 1; display: flex; justify-content: center; align-items: center; padding: 5px; position: relative; }
+        .wheel-container { position: relative; width: 95vw; height: 95vw; max-width: 80vh; max-height: 80vh; }
+        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 8px solid white; background: #fff; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+        .spin-btn-fixed { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 22%; height: 22%; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #ff1493; border: 6px solid #ff1493; font-size: 26px; z-index: 50; }
+        .pointer-fixed { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-top: 60px solid yellow; z-index: 60; }
+
+        .modal-full { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; z-index: 2000; flex-direction: column; }
+        .modal-box-full { width: 100%; height: 100%; display: flex; flex-direction: column; }
+        .modal-header-big { padding: 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; }
+        .list-container-big { flex: 1; overflow-y: auto; padding: 20px; background: #f8f8f8; }
+        #nameList li { display: flex; justify-content: space-between; padding: 20px; background: white; margin-bottom: 12px; border-radius: 15px; font-size: 26px; font-weight: 900; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .modal-footer-big { padding: 20px; border-top: 2px solid #eee; }
+
+        .modal-full-winner { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; z-index: 3000; align-items: center; justify-content: center; }
+        .winner-box-big { background: white; width: 85%; max-width: 500px; padding: 60px 30px; border-radius: 50px; text-align: center; border: 8px solid #ff1493; }
+        .winner-name-text-big { font-size: 80px; font-weight: 900; color: #ff1493; margin: 40px 0; }
+        .winner-item-box { background: white; padding: 20px; border-radius: 18px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border-left: 10px solid #ff1493; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    </style>
+
+    <script>
+        let names = ["ហេង", "សំណាង", "លាភ", "ជ័យ", "មាស", "ប្រាក់"];
+        let winnerHistory = [];
+        const colors = ["#ff1493", "#333333", "#ff69b4", "#1a1a1a", "#ff007f", "#444444"];
+        let startAngle = 0;
+        let isSpinning = false;
+
+        // មុខងារ Back Button
+        function pushState() { window.history.pushState({panelOpen: true}, ""); }
+        window.onpopstate = function() {
+            hideNamePanel(true);
+            hideHistoryPanel(true);
+            closeWinner(true);
+            closeConfirm();
+        };
+
+        // 👑 មុខងារ Custom Confirm
+        function askConfirm(type) {
+            const modal = document.getElementById('confirmModal');
+            const yesBtn = document.getElementById('confirmYesBtn');
+            modal.style.display = 'flex';
+            pushState();
+            
+            if(type === 'names') {
+                yesBtn.onclick = function() { names = []; updateList(); closeConfirm(); };
+            } else if (type === 'history') {
+                yesBtn.onclick = function() { winnerHistory = []; updateWinnerStats(); closeConfirm(); };
+            }
+        }
+        function closeConfirm() { 
+            document.getElementById('confirmModal').style.display = 'none'; 
+            if(window.history.state) window.history.back();
+        }
+
+        function showNamePanel() { pushState(); document.getElementById('namePanel').style.display = 'flex'; updateList(); }
+        function hideNamePanel(isBack) { 
+            document.getElementById('namePanel').style.display = 'none'; 
+            drawWheel(); 
+            if(!isBack && window.history.state) window.history.back();
+        }
+
+        function showHistoryPanel() { pushState(); document.getElementById('historyPanel').style.display = 'flex'; }
+        function hideHistoryPanel(isBack) { 
+            document.getElementById('historyPanel').style.display = 'none'; 
+            if(!isBack && window.history.state) window.history.back();
+        }
+
+        function closeWinner(isBack) { 
+            document.getElementById('winnerPanel').style.display = 'none'; 
+            if(!isBack && window.history.state) window.history.back();
+        }
+
+        function drawWheel() {
+            const canvas = document.getElementById("wheelCanvas");
+            const ctx = canvas.getContext("2d");
+            const size = canvas.width;
+            const center = size / 2;
+            const radius = center - 10;
+            ctx.clearRect(0, 0, size, size);
+            if(names.length === 0) return;
+            const arc = Math.PI / (names.length / 2);
+            names.forEach((name, i) => {
+                const angle = startAngle + i * arc;
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.beginPath(); ctx.moveTo(center, center);
+                ctx.arc(center, center, radius, angle, angle + arc, false);
+                ctx.fill();
+                ctx.save();
+                ctx.fillStyle = "white"; ctx.translate(center, center); ctx.rotate(angle + arc/2);
+                ctx.textAlign = "right"; ctx.textBaseline = "middle";
+                ctx.font = "bold 40px Battambang, Arial";
+                ctx.fillText(name, radius - 60, 0);
+                ctx.restore();
+            });
+        }
+
+        function spinWheel() {
+            if (isSpinning || names.length < 2) return;
+            isSpinning = true;
+            let duration = 4000;
+            let start = null;
+            let initialRotation = startAngle;
+            let totalRotation = Math.PI * 20 + Math.random() * Math.PI * 10;
+            function animate(timestamp) {
+                if (!start) start = timestamp;
+                let progress = timestamp - start;
+                let ease = 1 - Math.pow(1 - progress / duration, 3);
+                startAngle = initialRotation + totalRotation * ease;
+                drawWheel();
+                if (progress < duration) requestAnimationFrame(animate);
+                else { isSpinning = false; checkWinner(); }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function checkWinner() {
+            const arc = Math.PI / (names.length / 2);
+            const degrees = (startAngle * 180 / Math.PI) + 90;
+            const index = Math.floor((360 - (degrees % 360)) / (arc * 180 / Math.PI)) % names.length;
+            const winner = names[index];
+            winnerHistory.push(winner);
+            updateWinnerStats();
+            document.getElementById('winnerNameDisplay').innerText = winner;
+            pushState();
+            document.getElementById('winnerPanel').style.display = 'flex';
+        }
+
+        function updateWinnerStats() {
+            document.getElementById('winnerCount').innerText = winnerHistory.length;
+            const logBox = document.getElementById('winnersLog');
+            logBox.innerHTML = winnerHistory.map((name, i) => `
+                <div class="winner-item-box">
+                    <div><span style="background:#ff1493;color:white;padding:8px 15px;border-radius:12px;margin-right:15px;font-size:20px;">#${i + 1}</span>
+                    <span style="font-size:28px;font-weight:900;">${name}</span></div>
+                    <span style="font-size:30px;">🎊</span>
+                </div>
+            `).join('');
+        }
+
+        function processMultiNames() {
+            const area = document.getElementById('multiNames');
+            const newNames = area.value.split('\n').map(n => n.trim()).filter(n => n !== "");
+            if(newNames.length > 0) {
+                names = names.concat(newNames);
+                area.value = "";
+                updateList();
+            }
+        }
+
+        function removeName(i) { names.splice(i, 1); updateList(); }
+
+        function updateList() {
+            const list = document.getElementById('nameList');
+            list.innerHTML = names.map((n, i) => `<li>${n} <span style="color:red; font-size: 35px;" onclick="removeName(${i})">✕</span></li>`).join('');
+        }
+
+        window.onload = drawWheel;
+        window.addEventListener('resize', drawWheel);
+    </script>
+</div>
